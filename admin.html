@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Salon de Coiffure</title>
+    <!-- Lien vers le fichier CSS externe -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div id="login-screen">
+    <h2>Izaho tompon'andraikitra</h2>
+
+    <input type="password"
+           id="admin-password"
+           placeholder="Code d'accès">
+
+<button class="btn btn-primary" onclick="loginAdmin()">Se connecter</button>
+</div>
+
+<div id="admin-content" style="display:none;">
+
+    <div class="admin-container">
+        <header>
+            <h1>Espace Administration</h1>
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'">Retour Accueil</button>
+        </header>
+
+        <div class="grid">
+            <!-- 1. PARAMÈTRES DU PROPRIÉTAIRE -->
+            <section class="card">
+                <h2>1. ora sy andro mombab'ny orin'asa</h2>
+                <p class="subtitle">afaka ovaina amin'ny fotoana rehetra</p>
+                
+                <div class="form-group">
+                    <label for="salon-days">andro fisokafana</label>
+                    <input type="text" id="salon-days" value="Lundi au Samedi">
+                </div>
+                <div class="form-group">
+                    <label for="salon-hours">ora fisokafana</label>
+                    <input type="text" id="salon-hours" value="09:00 - 19:00">
+                </div>
+                <div class="form-group">
+                    <label for="salon-break">andro sy ora fangalàna aina</label>
+                    <input type="text" id="salon-break" value="Dimanche (Fermé), Pause midi : 12:30 - 13:30">
+                </div>
+                <button class="btn btn-primary" onclick="alert('Configuration des horaires sauvegardée !')">Enregistrer les Horaires</button>
+            </section>
+
+            <!-- 2. GESTION DES SERVICES -->
+            <section class="card">
+                <h2>2. ireo service misy</h2>
+                <div class="form-group input-spacing">
+                    <input type="text" id="service-name" placeholder="Nom (ex: Coiffure Homme)">
+                </div>
+                <div class="form-group">
+                    <label for="service-duration">faharetany isaky ny client iray (minutes)</label>
+                    <!-- CORRECTION : Saisie manuelle de la durée -->
+                    <input type="number" id="service-duration" placeholder="Écrivez la durée (ex: 35)" min="1">
+                </div>
+                
+                <button class="btn btn-primary" onclick="addService()">Ajouter Service</button>
+
+                <h3>Liste des services</h3>
+                <div id="services-list" class="list-container"></div>
+            </section>
+            
+            
+           <!-- 2.5 GESTION DES EMPLOYÉS -->
+<section class="card">
+    <h2>2.5 Employés</h2>
+    <p class="subtitle">Ajout d'employés polyvalents ou spécialisés</p>
+
+    <div class="form-group">
+        <input type="text" id="employee-name" placeholder="Nom de l'employé">
+    </div>
+
+    <div class="form-group">
+        <label>
+            <input type="checkbox" id="employee-polyvalent">
+            Employé polyvalent (mahay ny asa rehetra)
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label> Ireo asa hainy:</label>
+        <div id="employee-services-list"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="addEmployee()">
+        Ajouter Employé
+    </button>
+
+    <h3>Liste des employés</h3>
+    <div id="employees-list" class="list-container"></div>
+</section>
+
+            <!-- 3. AJOUT CLIENTS DIRECTS -->
+            <section class="card full-width">
+                <h2>3. Ajouter un Client sans Rendez-vous (Direct salon)</h2>
+                
+                <div class="tab-buttons">
+                    <button class="tab-btn active" id="tab-auto" onclick="switchClientMode('auto')">Ajout Automatique</button>
+                    <button class="tab-btn" id="tab-manual" onclick="switchClientMode('manual')">Ajout Manuel</button>
+                </div>
+
+                <!-- Formulaire Commun / Choix du service -->
+                <div class="form-group">
+                    <label for="client-service">Sélectionner le Service</label>
+                    <select id="client-service" onchange="updateDurationHint()">
+                        <!-- Rempli dynamiquement par le JavaScript -->
+                    </select>
+                    <p class="hint-text">Durée estimée : <span id="duration-hint">0</span> minutes</p>
+                </div>
+
+                <!-- Mode Automatique -->
+                <div id="form-auto">
+                    <p class="info-auto">⚡ Le client sera placé automatiquement sur le premier créneau horaire libre aujourd'hui.</p>
+                </div>
+
+                <!-- Mode Manuel -->
+                <div id="form-manual" class="hidden">
+                    <div class="form-group">
+                        <label for="client-date">Date et Jour du rendez-vous</label>
+                        <input type="date" id="client-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-time">Heure exacte</label>
+                        <input type="time" id="client-time">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="addClient()">Enregistrer le Client au Salon</button>
+
+
+                <div id="clients-list" class="list-container"></div>
+                
+                <h3>Emploi du temps par Service</h3>
+<div id="service-schedules-container"></div>
+            </section>
+        </div>
+    </div>
+    </div>
+
+    <!-- Lien vers le fichier JavaScript dédié à l'administration configuré en Module -->
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
