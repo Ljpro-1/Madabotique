@@ -278,22 +278,6 @@ function deleteService(id) {
             alert("Impossible de supprimer le service pour le moment.");
         });
 }
-function editService(id) {
-    const service = services.find(s => s.id === id);
-    if (service) {
-        const newName = prompt("Nouveau nom du service :", service.name);
-        const newDuration = prompt("Nouvelle durée (en minutes) :", service.duration);
-        const newCapacity = prompt("Nombre d'employés disponibles :", getServiceCapacity(service.name));
-        
-        if (newName && newName.trim() !== "" && newDuration && !isNaN(newDuration) && parseInt(newDuration) > 0 && newCapacity && !isNaN(newCapacity) && parseInt(newCapacity) > 0) {
-            set(ref(database, `services/${id}`), {
-                name: newName.trim(),
-                duration: parseInt(newDuration),
-                capacity: parseInt(newCapacity)
-            });
-        }
-    }
-}
 
 function updateDurationHint() {
     const select = document.getElementById('client-service');
@@ -1062,4 +1046,45 @@ function findAvailableEmployee(serviceName, dateISO, startMin, endMin) {
     }
 
     return null;
+}
+
+
+
+
+function editService(serviceId) {
+    
+    const service = services.find(s => s.id === serviceId);
+    
+    if (!service) {
+        alert("Service introuvable");
+        return;
+    }
+    
+    const newName = prompt("Nom du service :", service.name);
+    if (!newName) return;
+    
+    const newDuration = prompt("Durée (minutes) :", service.duration);
+    if (!newDuration || isNaN(newDuration)) {
+        alert("Durée invalide");
+        return;
+    }
+    
+    const updatedService = {
+        name: newName.trim(),
+        duration: Number(newDuration),
+        updatedAt: Date.now()
+    };
+    
+    const serviceRef = ref(database, `services/${serviceId}`);
+    
+    set(serviceRef, updatedService)
+        .then(() => {
+            alert("Service mis à jour !");
+            renderServices(); // ✅ CORRECTION ICI
+            loadAvailableTimeSlots(); // OK si existe
+        })
+        .catch((error) => {
+            console.error(error);
+            alert("Erreur lors de la modification");
+        });
 }
