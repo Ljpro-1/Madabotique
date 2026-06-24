@@ -6,192 +6,290 @@
     <title>anao resérvation mora no sady aingana</title>
     <!-- Fichier CSS global du salon -->
     <link rel="stylesheet" href="admin.css">
-    <style>
-        :root {
-            --primary: #4a3b32;
-            --accent: #d4af37;
-            --border: #e0e0e0;
-            --bg-light: #fdfbf7;
-        }
+<style>
 
-        body {
-            background-color: var(--bg-light);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+:root {
+    --primary: #3b2f2a;
+    --accent: #c9a227;
+    --border: #e6e0d8;
+    --bg-light: #fbfaf7;
+    --text: #1f1f1f;
+    --muted: #6b6b6b;
+    --card: #ffffff;
+    --shadow: 0 10px 30px rgba(0,0,0,0.06);
+    --radius: 14px;
+}
 
-        .client-container {
-            max-width: 500px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-        
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 15px;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        /* Section Sélection de Service & Date */
-        .selection-header-box {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-        }
+body {
+    background-color: var(--bg-light);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.5;
+}
 
-        .flex-inputs {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
+/* CONTAINER */
+.client-container {
+    max-width: 520px;
+    margin: 40px auto;
+    padding: 0 18px;
+}
 
-        @media (min-width: 768px) {
-            .flex-inputs { grid-template-columns: 1fr 1fr; }
-        }
+/* HEADER */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+}
 
-        /* Grand Tableau Emploi du Temps */
-        .schedule-title-area {
-            margin-top: 30px;
-            margin-bottom: 10px;
-        }
+/* SELECTION BOX */
+.selection-header-box {
+    background: var(--card);
+    padding: 18px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+}
 
-        .schedule-table-container {
-            overflow-x: auto;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #ffffff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
+/* INPUT GRID */
+.flex-inputs {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
 
-        .schedule-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 15px;
-        }
+@media (min-width: 768px) {
+    .flex-inputs {
+        grid-template-columns: 1fr 1fr;
+    }
+}
 
-        .schedule-table th {
-            background-color: var(--primary);
-            color: white;
-            padding: 14px 18px;
-            font-weight: 600;
-        }
+/* SECTION TITLE */
+.schedule-title-area {
+    margin-top: 26px;
+    margin-bottom: 10px;
+}
 
-        .schedule-table td {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border);
-            vertical-align: middle;
-        }
+/* TABLE CONTAINER */
+.schedule-table-container {
+    overflow-x: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 26px;
+}
 
-        .schedule-table tr:last-child td {
-            border-bottom: none;
-        }
+/* TABLE */
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
 
-        .schedule-table tr:hover {
-            background-color: #fffdf9;
-        }
+.schedule-table th {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
 
-        .time-range {
-            font-weight: bold;
-            color: var(--primary);
-            font-size: 16px;
-        }
+.schedule-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
 
-        /* Badges de Statut Libres et Occupés */
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            text-align: center;
-        }
+.schedule-table tr:hover {
+    background: #faf7f2;
+}
 
-        .status-available {
-            background-color: #e6f7ed;
-            color: #1e7e34;
-            border: 1px solid #c3e6cb;
-        }
+.schedule-table tr:last-child td {
+    border-bottom: none;
+}
 
-        .status-busy {
-            background-color: #fde8e8;
-            color: #c81e1e;
-            border: 1px solid #f8b4b4;
-        }
+/* TIME */
+.time-range {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 15px;
+}
 
-        .staff-count {
-            font-size: 13px;
-            color: #666;
-            margin-left: 10px;
-        }
+/* BADGES */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
 
-        /* Formulaire de réservation en bas */
-        .booking-form-card {
-            background: #ffffff;
-            padding: 25px;
-            border-radius: 8px;
-            border-top: 4px solid var(--accent);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 40px;
-        }
+.status-available {
+    background: #eaf7ef;
+    color: #1f7a3a;
+    border: 1px solid #ccebd6;
+}
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+.status-busy {
+    background: #fdecec;
+    color: #b42318;
+    border: 1px solid #f5c2c2;
+}
 
-        @media (min-width: 768px) {
-            .form-grid { grid-template-columns: 1fr 1fr 1fr; }
-        }
+/* STAFF INFO */
+.staff-count {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: 8px;
+}
 
-        /* Fenêtre surgissante (Pop-up Ticket & Annulation) */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 1000;
-        }
+/* BOOKING FORM */
+.booking-form-card {
+    background: var(--card);
+    padding: 22px;
+    border-radius: var(--radius);
+    border-top: 4px solid var(--accent);
+    box-shadow: var(--shadow);
+    margin-bottom: 40px;
+}
 
-        .modal-card {
-            background: white; padding: 30px; border-radius: 8px;
-            max-width: 500px; width: 90%; text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-        }
+/* FORM GRID */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+}
 
-        .ticket-box {
-            background: #fdfbf7; border: 2px dashed var(--accent);
-            padding: 18px; margin: 20px 0; border-radius: 6px;
-            text-align: left; font-size: 15px; line-height: 1.6;
-        }
+@media (min-width: 768px) {
+    .form-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 
-        .info-reminder {
-            background-color: #fff9e6; color: #8a6d3b;
-            padding: 12px; border-radius: 4px; margin-top: 15px;
-            font-weight: 600; font-size: 14px;
-            border-left: 4px solid var(--accent);
-        }
+/* MODAL OVERLAY */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(6px);
+}
 
-        .cancellation-reason-box {
-            margin: 15px 0;
-            text-align: left;
-        }
+/* MODAL CARD */
+.modal-card {
+    background: var(--card);
+    padding: 26px;
+    border-radius: var(--radius);
+    max-width: 480px;
+    width: 92%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: pop 0.2s ease;
+}
 
-        .cancellation-reason-box textarea {
-            width: 100%; padding: 10px; border: 1px solid var(--border);
-            border-radius: 4px; resize: vertical; min-height: 70px;
-            box-sizing: border-box; margin-top: 5px;
-        }
+@keyframes pop {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
 
-        .hidden { display: none !important; }
-        .no-data { text-align: center; padding: 30px; color: #777; background: #fff; border-radius: 8px; }
+/* TICKET BOX */
+.ticket-box {
+    background: #faf7f2;
+    border: 2px dashed var(--accent);
+    padding: 16px;
+    margin: 18px 0;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* INFO BOX */
+.info-reminder {
+    background: #fff7e6;
+    color: #7a5a1b;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 14px;
+    font-weight: 600;
+    font-size: 13px;
+    border-left: 4px solid var(--accent);
+}
+
+/* CANCEL BOX */
+.cancellation-reason-box {
+    margin: 14px 0;
+    text-align: left;
+}
+
+.cancellation-reason-box textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+    transition: 0.2s;
+}
+
+.cancellation-reason-box textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(201,162,39,0.15);
+}
+
+/* UTILITIES */
+.hidden {
+    display: none !important;
+}
+
+.no-data {
+    text-align: center;
+    padding: 26px;
+    color: var(--muted);
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+/* MOBILE OPTIMIZATION */
+@media (max-width: 600px) {
+
+    .client-container {
+        margin: 20px auto;
+        padding: 0 14px;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .modal-card {
+        padding: 20px;
+    }
+}
     </style>
 </head>
 <body>
