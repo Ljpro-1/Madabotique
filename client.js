@@ -142,7 +142,7 @@ function getPauseAndClosureLimits() {
 function cancelBookingById(id) {
 
     const confirmation = confirm(
-        "tena ho anjanonao ilay izy ve🥺 ?"
+        "tena ho anjanona ilay reservation anao ve ?"
     );
 
     if (!confirmation) return;
@@ -151,7 +151,7 @@ function cancelBookingById(id) {
     .then(() => {
 
         alert(
-          "nanjanona ilay resérvarion anao.\n\n Tsapanay fa mety misy tranga tsy ampoizina, de mirary soa ho anao, izahay dia misokatra eto foana ka asaina ianao ho tonga amin'ny fotoana izay mampalalaka  anao."
+          "nanjanona ilay resérvarion anao.\n\n Tsapanay fa mety misy tranga tsy ampoizina, de mirary soa ho anao, izahay dia misokatra eto foana ka asaina ianao ho tonga amin'ny fotoana izay mampalalaka  anao SALON DE BEAUTÉ MADAGASCAR😊😊 "
         );
 
         searchMyBookings();
@@ -225,126 +225,334 @@ window.loadAvailableTimeSlots = loadAvailableTimeSlots;
 
 
 
+function loadAvailableTimeSlots() {
 
-    function loadAvailableTimeSlots() {
-    const tableBody = document.getElementById('available-slots-table-body');
-    const tableWrapper = document.getElementById('table-wrapper');
-    const msg = document.getElementById('slots-loading-message');
-    const select = document.getElementById('select-service');
-    const dateInput = document.getElementById('appointment-date');
-    const bookingForm = document.getElementById('booking-form-section');
+    const tableBody =
+        document.getElementById(
+            'available-slots-table-body'
+        );
 
-    if (!tableBody || !tableWrapper || !msg || !select || !dateInput) return;
+    const tableWrapper =
+        document.getElementById(
+            'table-wrapper'
+        );
+
+    const msg =
+        document.getElementById(
+            'slots-loading-message'
+        );
+
+    const select =
+        document.getElementById(
+            'select-service'
+        );
+
+    const dateInput =
+        document.getElementById(
+            'appointment-date'
+        );
+
+    const bookingForm =
+        document.getElementById(
+            'booking-form-section'
+        );
+
+    if (
+        !tableBody ||
+        !tableWrapper ||
+        !msg ||
+        !select ||
+        !dateInput
+    ) {
+        return;
+    }
 
     tableBody.innerHTML = '';
     tableWrapper.style.display = 'none';
-    if (bookingForm) bookingForm.classList.add('hidden');
+
+    if (bookingForm) {
+        bookingForm.classList.add('hidden');
+    }
+
     selectedTimeSlotMinutes = null;
 
-    if (!select.value || !dateInput.value) {
-        msg.innerText = "Sélectionnez un service et une date valide pour charger l'emploi du temps.";
+    if (
+        !select.value ||
+        !dateInput.value
+    ) {
+
+        msg.innerText =
+            "Sélectionnez un service et une date valide.";
+
         msg.style.display = 'block';
+
         return;
     }
 
-    const service = services.find(s => s.id == select.value);
-    if (!service) return;
-
-    const salonLimits = getSalonLimits();
-    const pauseLimits = getPauseAndClosureLimits();
-
-    const targetDateObj = new Date(dateInput.value);
-
-    if (pauseLimits.closedDays.includes(targetDateObj.getDay())) {
-        msg.innerText = "miala tsiny tompoko fa midy izahay androany, misafidiana andro hafa.";
-        msg.style.display = 'block';
-        return;
-    }
-
-    let startMinutes = salonLimits.open;
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-
-    if (dateInput.value === todayStr) {
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        if (currentMinutes > startMinutes) startMinutes = currentMinutes;
-    }
-
-    let hasSlotsGenerated = false;
-for (
-    let time = startMinutes;
-    time <= salonLimits.close - service.duration;
-)
-{
-
-    const endCheck = time + service.duration;
-
-    // ⛔ SAUT DIRECT SI ON ENTRE DANS LA PAUSE
-    if (time < pauseLimits.end && endCheck > pauseLimits.start) {
-        time = pauseLimits.end;
-        continue;
-    }
-        hasSlotsGenerated = true;
-
-        const availableEmployees = getAvailableEmployeesAtMinute(
-            time,
-            dateInput.value,
-            service.id
+    const service =
+        services.find(
+            s => s.id == select.value
         );
 
-        const availableStaffLeft = availableEmployees.length;
+    if (!service) return;
 
-        let isPastSlot = false;
+    const salonLimits =
+        getSalonLimits();
 
-        if (dateInput.value === todayStr) {
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
-            if (endCheck <= currentMinutes) {
-                isPastSlot = true;
+    const pauseLimits =
+        getPauseAndClosureLimits();
+
+    const dateISO =
+        dateInput.value;
+
+    const targetDate =
+        new Date(dateISO);
+
+    if (
+        pauseLimits.closedDays.includes(
+            targetDate.getDay()
+        )
+    ) {
+
+        msg.innerText =
+            "miala tsiny tompoko fa mikatona izahay androany.";
+
+        msg.style.display = 'block';
+
+        return;
+    }
+
+    const now =
+        new Date();
+
+    const todayStr =
+        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+    const currentMinutes =
+        (now.getHours() * 60) +
+        now.getMinutes();
+
+    let hasAny = false;
+
+    for (
+        let startMin = salonLimits.open;
+        startMin <= salonLimits.close - service.duration;
+        startMin += service.duration
+    ) {
+
+        const endMin =
+            startMin + service.duration;
+
+        // Hors horaires salon
+
+        if (
+            endMin >
+            salonLimits.close
+        ) {
+            continue;
+        }
+
+        // Pause déjeuner
+
+        const overlapPause =
+            (
+                startMin >= pauseLimits.start &&
+                startMin < pauseLimits.end
+            )
+            ||
+            (
+                endMin > pauseLimits.start &&
+                endMin <= pauseLimits.end
+            )
+            ||
+            (
+                startMin <= pauseLimits.start &&
+                endMin >= pauseLimits.end
+            );
+
+        if (overlapPause) {
+            continue;
+        }
+
+        let availableEmployees =
+            [];
+
+        let slotAvailable =
+            true;
+
+        for (
+            let minute = startMin;
+            minute < endMin;
+            minute++
+        ) {
+
+            const freeEmployees =
+                getAvailableEmployeesAtMinute(
+                    minute,
+                    dateISO,
+                    service.id
+                );
+
+            if (
+                freeEmployees.length === 0
+            ) {
+
+                slotAvailable = false;
+
+                break;
+            }
+
+            if (
+                minute === startMin
+            ) {
+
+                availableEmployees =
+                    freeEmployees;
             }
         }
 
-        const isFree = !isPastSlot && availableStaffLeft > 0;
+        let isPastSlot = false;
 
-        const row = document.createElement('tr');
-        row.id = `slot-row-${time}`;
+        if (
+            dateISO === todayStr &&
+            endMin <= currentMinutes
+        ) {
 
-        const startTimeStr = minutesToHHMM(time);
-        const endTimeStr = minutesToHHMM(endCheck);
+            isPastSlot = true;
+        }
 
-        if (isFree) {
-            row.innerHTML = `
-                <td class="time-range">${startTimeStr} - ${endTimeStr}</td>
-                <td><span class="status-badge status-available">mbola malalaka</span></td>
-                <td>
-                    <button class="btn btn-secondary btn-select-slot" id="slot-btn-${time}">
-                        hisafidy ito ora ito
-                    </button>
-                    <span class="staff-count">(${availableStaffLeft} sisa ny toerana malalaka)</span>
-                </td>
-            `;
+        const row =
+            document.createElement('tr');
 
-            row.querySelector('.btn-select-slot').onclick = function (e) {
+        const startStr =
+            minutesToHHMM(startMin);
+
+        const endStr =
+            minutesToHHMM(endMin);
+
+        if (
+            slotAvailable &&
+            !isPastSlot
+        ) {
+
+            const btn =
+                document.createElement(
+                    'button'
+                );
+
+            btn.className =
+                "btn btn-secondary btn-select-slot";
+
+            btn.innerText =
+                "hisafidy ito ora ito";
+
+            btn.dataset.start =
+                startMin;
+
+            btn.onclick =
+                function(e) {
+
                 e.preventDefault();
-                document.querySelectorAll('#available-slots-table-body tr')
-                    .forEach(r => r.style.backgroundColor = '');
 
-                row.style.backgroundColor = '#fff9e6';
-                selectedTimeSlotMinutes = time;
-                document.getElementById('client-selected-hour').value = startTimeStr;
+                document
+                .querySelectorAll(
+                    '#available-slots-table-body tr'
+                )
+                .forEach(
+                    r => r.style.backgroundColor = ''
+                );
 
-                if (bookingForm) bookingForm.classList.remove('hidden');
-                bookingForm.scrollIntoView({ behavior: 'smooth' });
+                row.style.backgroundColor =
+                    '#fff9e6';
+
+                selectedTimeSlotMinutes =
+                    Number(
+                        this.dataset.start
+                    );
+
+                document
+                .getElementById(
+                    'client-selected-hour'
+                )
+                .value =
+                    startStr;
+
+                if (bookingForm) {
+
+                    bookingForm.classList.remove(
+                        'hidden'
+                    );
+
+                    bookingForm.scrollIntoView({
+                        behavior:'smooth'
+                    });
+                }
             };
 
-        } else {
             row.innerHTML = `
-                <td class="time-range" style="color:#999; text-decoration:line-through;">
-                    ${startTimeStr} - ${endTimeStr}
+                <td class="time-range">
+                    ${startStr} - ${endStr}
                 </td>
-                <td><span class="status-badge status-busy">efa misy olona</span></td>
+
                 <td>
-                    <span style="color:#c81e1e; font-size:13px; font-weight:600;">
-                        ${isPastSlot ? "Horaire déjà passé" : "sahirana daholo ny mpiasa rehetra😅"}
+                    <span class="status-badge status-available">
+                        mbola malalaka
+                    </span>
+                </td>
+
+                <td></td>
+            `;
+
+            row.children[2]
+                .appendChild(btn);
+
+            const staffInfo =
+                document.createElement(
+                    'span'
+                );
+
+            staffInfo.className =
+                "staff-count";
+
+            staffInfo.innerText =
+                `(${availableEmployees.length} place(s))`;
+
+            row.children[2]
+                .appendChild(staffInfo);
+
+            hasAny = true;
+
+        } else {
+
+            row.innerHTML = `
+                <td
+                    class="time-range"
+                    style="
+                        color:#999;
+                        text-decoration:line-through;
+                    "
+                >
+                    ${startStr} - ${endStr}
+                </td>
+
+                <td>
+                    <span class="status-badge status-busy">
+                        efa misy olona😊
+                    </span>
+                </td>
+
+                <td>
+                    <span
+                        style="
+                            color:#c81e1e;
+                            font-size:13px;
+                        "
+                    >
+                        ${
+                            isPastSlot
+                            ? "horaire passé"
+                            : "occupé"
+                        }
                     </span>
                 </td>
             `;
@@ -353,16 +561,25 @@ for (
         tableBody.appendChild(row);
     }
 
-    if (tableBody.children.length > 0) {
-        msg.style.display = 'none';
-        tableWrapper.style.display = 'block';
-    } else {
-        msg.innerText = "Aucun horaire n'est disponible pour cette journée.";
-        msg.style.display = 'block';
+    if (!hasAny) {
+
+        msg.innerText =
+            "tsy misy ora malalaka intsony ho an'ny androany😊 azafady misafidiana andro hafa.";
+
+        msg.style.display =
+            'block';
+
+        return;
     }
+
+    msg.style.display =
+        'none';
+
+    tableWrapper.style.display =
+        'block';
 }
 
-window.loadAvailableTimeSlots = loadAvailableTimeSlots;
+
 
 function isEmployeeAvailable(emp, dateISO, startMin, endMin) {
     return !clients.some(c =>
@@ -389,8 +606,8 @@ function confirmClientBooking() {
     }
 
     const service = services.find(s => s.id == select.value);
-    const startMin = selectedTimeSlotMinutes;
-    const endMin = startMin + service.duration;
+let startMin = parseInt(selectedTimeSlotMinutes, 10);
+const endMin = startMin + service.duration;
     const assignedEmployee = findAvailableEmployee(
     service.id,
     dateInput.value,
@@ -433,12 +650,12 @@ serviceId: service.id,
 
         document.getElementById('ticket-content').innerHTML = `
             <strong>Numéro de ticket :</strong> ${ticketNumber}<br>
-            <strong>Bénéficiaire :</strong> ${clientName}<br>
+            <strong>anarana :</strong> ${clientName}<br>
             <strong>Téléphone :</strong> ${phone}<br>
             <hr style="border:1px dashed #e0e0e0; margin:10px 0;">
-            <strong>Soin programmé :</strong> ${service.name}<br>
-            <strong>Date retenue :</strong> ${formattedDate}<br>
-            <strong>Plage exacte :</strong> de ${minutesToHHMM(startMin)} à ${minutesToHHMM(endMin)}
+            <strong>service ho atao :</strong> ${service.name}<br>
+            <strong>andro anaovana azy :</strong> ${formattedDate}<br>
+            <strong>ora anaovana azy :</strong> de ${minutesToHHMM(startMin)} à ${minutesToHHMM(endMin)}
         `;
 
         const timeBeforeStr = minutesToHHMM(startMin - 5);
@@ -590,29 +807,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function getAvailableEmployeesAtMinute(minute, dateTarget, serviceId) {
 
-    const busyEmployees = new Set();
+    const service = services.find(s => s.id === serviceId);
 
-    clients.forEach(c => {
-        if (c.dateISO === dateTarget) {
-            if (minute >= c.startMin && minute < c.endMin) {
-                busyEmployees.add(c.employeeId);
-            }
-        }
-    });
+    if (!service) return [];
 
-    return employees.filter(e =>
-        !busyEmployees.has(e.id) &&
-        (
-            e.polyvalent ||
+    const startMin = minute;
+const endMin = startMin + service.duration;
+
+    return employees.filter(emp => {
+
+        const canDoService =
+            emp.polyvalent ||
             (
-    Array.isArray(e.services) &&
-    e.services.includes(
-        services.find(s => s.id === serviceId)?.name
-    )
-)
-        )
-    );
+                Array.isArray(emp.services) &&
+                emp.services.includes(service.name)
+            );
+
+        if (!canDoService) return false;
+
+        const hasConflict = clients.some(c =>
+            c.employeeId === emp.id &&
+            c.dateISO === dateTarget &&
+            startMin < c.endMin &&
+            endMin > c.startMin
+        );
+
+        return !hasConflict;
+    });
 }
+
+
+
+
 function findAvailableEmployee(serviceId, dateISO, startMin, endMin) {
 
     const eligibleEmployees = employees.filter(emp =>
@@ -630,8 +856,7 @@ function findAvailableEmployee(serviceId, dateISO, startMin, endMin) {
         const busy = clients.some(c =>
             c.employeeId === emp.id &&
             c.dateISO === dateISO &&
-            startMin < c.endMin &&
-            endMin > c.startMin
+            !(endMin <= c.startMin || startMin >= c.endMin)
         );
 
         if (!busy) {
@@ -641,3 +866,41 @@ function findAvailableEmployee(serviceId, dateISO, startMin, endMin) {
 
     return null;
 }
+
+function generateDynamicSlots(serviceDuration, dateISO, salonOpen, salonClose, bookedSlots) {
+
+    const slots = [];
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    let cursor = salonOpen;
+
+    // 🔥 si aujourd’hui → départ = maintenant
+    if (dateISO === todayStr) {
+        cursor = Math.max(cursor, now.getHours() * 60 + now.getMinutes());
+    }
+
+    const sortedBookings = [...bookedSlots].sort((a, b) => a.startMin - b.startMin);
+
+    while (cursor + serviceDuration <= salonClose) {
+
+        const start = cursor;
+        const end = start + serviceDuration;
+
+        // ❌ collision avec réservations Firebase
+        const conflict = sortedBookings.some(b =>
+            !(end <= b.startMin || start >= b.endMin)
+        );
+
+        if (!conflict) {
+            slots.push({ start, end });
+            cursor = end; // 🔥 avance après slot validé
+        } else {
+            cursor += 5; // 🔥 recherche fine (5 min)
+        }
+    }
+
+    return slots;
+}
+
+
