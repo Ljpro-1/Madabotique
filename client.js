@@ -413,14 +413,12 @@ function loadAvailableTimeSlots() {
 
         let isPastSlot = false;
 
-        if (
-            dateISO === todayStr &&
-            endMin <= currentMinutes
-        ) {
-
-            isPastSlot = true;
-        }
-
+    if (
+    dateISO === todayStr &&
+    startMin <= currentMinutes
+) {
+    isPastSlot = true;
+}
         const row =
             document.createElement('tr');
 
