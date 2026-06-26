@@ -223,360 +223,176 @@ window.updateServiceSelection = updateServiceSelection;
 window.loadAvailableTimeSlots = loadAvailableTimeSlots;
 
 
-
-
 function loadAvailableTimeSlots() {
+    const tableBody = document.getElementById('available-slots-table-body');
+    const tableWrapper = document.getElementById('table-wrapper');
+    const msg = document.getElementById('slots-loading-message');
+    const select = document.getElementById('select-service');
+    const dateInput = document.getElementById('appointment-date');
+    const bookingForm = document.getElementById('booking-form-section');
 
-    const tableBody =
-        document.getElementById(
-            'available-slots-table-body'
-        );
+    if (!tableBody || !tableWrapper || !msg || !select || !dateInput) return;
 
-    const tableWrapper =
-        document.getElementById(
-            'table-wrapper'
-        );
-
-    const msg =
-        document.getElementById(
-            'slots-loading-message'
-        );
-
-    const select =
-        document.getElementById(
-            'select-service'
-        );
-
-    const dateInput =
-        document.getElementById(
-            'appointment-date'
-        );
-
-    const bookingForm =
-        document.getElementById(
-            'booking-form-section'
-        );
-
-    if (
-        !tableBody ||
-        !tableWrapper ||
-        !msg ||
-        !select ||
-        !dateInput
-    ) {
-        return;
-    }
-
+    // 1. Famafana sy famerenana ny fampisehoana ho amin'ny teboka zero
     tableBody.innerHTML = '';
     tableWrapper.style.display = 'none';
-
-    if (bookingForm) {
-        bookingForm.classList.add('hidden');
+    if (bookingForm) bookingForm.classList.add('hidden');
+    
+    if (typeof selectedTimeSlotMinutes !== 'undefined') {
+        selectedTimeSlotMinutes = null;
     }
 
-    selectedTimeSlotMinutes = null;
-
-    if (
-        !select.value ||
-        !dateInput.value
-    ) {
-
-        msg.innerText =
-            "Sélectionnez un service et une date valide.";
-
+    // 2. Fanamarinana ny safidy nataon'ny mpanjifa
+    if (!select.value || !dateInput.value) {
+        msg.innerText = "Misafidiana asa sy daty  azafady.";
         msg.style.display = 'block';
-
         return;
     }
 
-    const service =
-        services.find(
-            s => s.id == select.value
-        );
-
+    if (typeof services === 'undefined') return;
+    const service = services.find(s => s.id == select.value);
     if (!service) return;
 
-    const salonLimits =
-        getSalonLimits();
+    // 3. Fitantanana ny daty sy ny fahasamihafan'ny ora (Fuseau horaire)
+    const [year, month, day] = dateInput.value.split('-').map(Number);
+    const targetDate = new Date(year, month - 1, day); 
 
-    const pauseLimits =
-        getPauseAndClosureLimits();
-
-    const dateISO =
-        dateInput.value;
-
-    const targetDate =
-        new Date(dateISO);
-
-    if (
-        pauseLimits.closedDays.includes(
-            targetDate.getDay()
-        )
-    ) {
-
-        msg.innerText =
-            "miala tsiny tompoko fa mikatona izahay androany.";
-
+    const pauseLimits = getPauseAndClosureLimits();
+    if (pauseLimits && pauseLimits.closedDays && pauseLimits.closedDays.includes(targetDate.getDay())) {
+        msg.textContent = "Miala tsiny tompoko fa mikatona izahay androany.";
         msg.style.display = 'block';
-
         return;
     }
 
-    const now =
-        new Date();
+    const salonLimits = getSalonLimits();
+    if (!salonLimits) return;
 
-    const todayStr =
-        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+    const isToday = (dateInput.value === todayStr);
 
-    const currentMinutes =
-        (now.getHours() * 60) +
-        now.getMinutes();
+    let hasAnyAvailableSlot = false;
+    const fragment = document.createDocumentFragment(); 
 
-    let hasAny = false;
+    // Famandrihana isaky ny 5 minitra mba tsy hisian'ny fotoana matiantoka
+    const TIME_STEP = 5; 
 
+    // 4. Loop lehibe hitadiavana ny fotoana malalaka rehetra
     for (
         let startMin = salonLimits.open;
         startMin <= salonLimits.close - service.duration;
-        startMin += service.duration
+        startMin += TIME_STEP
     ) {
+        const endMin = startMin + service.duration;
 
-        const endMin =
-            startMin + service.duration;
-
-        // Hors horaires salon
-
-        if (
-            endMin >
-            salonLimits.close
-        ) {
+        // Tsy mihoatra ny ora fikatonan'ny trano heva
+        if (endMin > salonLimits.close) {
             continue;
         }
 
-        // Pause déjeuner
-
-        const overlapPause =
-            (
-                startMin >= pauseLimits.start &&
-                startMin < pauseLimits.end
-            )
-            ||
-            (
-                endMin > pauseLimits.start &&
-                endMin <= pauseLimits.end
-            )
-            ||
-            (
-                startMin <= pauseLimits.start &&
-                endMin >= pauseLimits.end
-            );
-
+        // Fanamarinana hentitra ny ora fisakafoana (pause déjeuner)
+        const overlapPause = (startMin < pauseLimits.end && endMin > pauseLimits.start);
         if (overlapPause) {
             continue;
         }
 
-        let availableEmployees =
-            [];
+        // Fitadiavana ny mpiasa malalaka tsy tapaka
+        let availableEmployees = [];
+        let firstMinute = true;
+        let slotAvailable = true;
 
-        let slotAvailable =
-            true;
-
-        for (
-            let minute = startMin;
-            minute < endMin;
-            minute++
-        ) {
-
-            const freeEmployees =
-                getAvailableEmployeesAtMinute(
-                    minute,
-                    dateISO,
-                    service.id
-                );
-
-            if (
-                freeEmployees.length === 0
-            ) {
-
+        for (let minute = startMin; minute < endMin; minute++) {
+            const freeEmployees = getAvailableEmployeesAtMinute(minute, dateInput.value, service.id);
+            
+            if (!freeEmployees || freeEmployees.length === 0) {
                 slotAvailable = false;
-
                 break;
             }
 
-            if (
-                minute === startMin
-            ) {
-
-                availableEmployees =
-                    freeEmployees;
+            if (firstMinute) {
+                availableEmployees = [...freeEmployees];
+                firstMinute = false;
+            } else {
+                // Tsy maintsy mpiasa iray ihany no manao ny asa hatramin'ny farany
+                availableEmployees = availableEmployees.filter(emp => freeEmployees.includes(emp));
+                if (availableEmployees.length === 0) {
+                    slotAvailable = false;
+                    break;
+                }
             }
         }
 
-        let isPastSlot = false;
+        // Fanamarinana raha efa lasa ny ora (ho an'ny androany)
+        const isPastSlot = isToday && startMin <= currentMinutes;
 
-    if (
-    dateISO === todayStr &&
-    startMin <= currentMinutes
-) {
-    isPastSlot = true;
-}
-        const row =
-            document.createElement('tr');
+        // Ny fotoana malalaka sy mbola tsy lasa ihany no ampidirina ao amin'ny HTML
+        if (slotAvailable && !isPastSlot) {
+            hasAnyAvailableSlot = true;
+            const row = document.createElement('tr');
+            
+            const startStr = typeof minutesToHHMM === 'function' ? minutesToHHMM(startMin) : `${Math.floor(startMin/60)}:${String(startMin%60).padStart(2,'0')}`;
+            const endStr = typeof minutesToHHMM === 'function' ? minutesToHHMM(endMin) : `${Math.floor(endMin/60)}:${String(endMin%60).padStart(2,'0')}`;
 
-        const startStr =
-            minutesToHHMM(startMin);
+            row.innerHTML = `
+                <td class="time-range">${startStr} - ${endStr}</td>
+                <td><span class="status-badge status-available">Mbola malalaka</span></td>
+                <td class="action-cell"></td>
+            `;
 
-        const endStr =
-            minutesToHHMM(endMin);
+            const btn = document.createElement('button');
+            btn.className = "btn btn-secondary btn-select-slot";
+            btn.innerText = "Hisafidy ity ora ity";
+            btn.dataset.start = startMin;
 
-        if (
-            slotAvailable &&
-            !isPastSlot
-        ) {
-
-            const btn =
-                document.createElement(
-                    'button'
-                );
-
-            btn.className =
-                "btn btn-secondary btn-select-slot";
-
-            btn.innerText =
-                "hisafidy ito ora ito";
-
-            btn.dataset.start =
-                startMin;
-
-            btn.onclick =
-                function(e) {
-
+            btn.onclick = function(e) {
                 e.preventDefault();
+                tableBody.querySelectorAll('tr').forEach(r => r.style.backgroundColor = '');
+                
+                row.style.backgroundColor = '#fff9e6';
+                
+                if (typeof selectedTimeSlotMinutes !== 'undefined') {
+                    selectedTimeSlotMinutes = Number(this.dataset.start);
+                }
 
-                document
-                .querySelectorAll(
-                    '#available-slots-table-body tr'
-                )
-                .forEach(
-                    r => r.style.backgroundColor = ''
-                );
-
-                row.style.backgroundColor =
-                    '#fff9e6';
-
-                selectedTimeSlotMinutes =
-                    Number(
-                        this.dataset.start
-                    );
-
-                document
-                .getElementById(
-                    'client-selected-hour'
-                )
-                .value =
-                    startStr;
+                const hourInput = document.getElementById('client-selected-hour');
+                if (hourInput) hourInput.value = startStr;
 
                 if (bookingForm) {
-
-                    bookingForm.classList.remove(
-                        'hidden'
-                    );
-
-                    bookingForm.scrollIntoView({
-                        behavior:'smooth'
-                    });
+                    bookingForm.classList.remove('hidden');
+                    bookingForm.scrollIntoView({ behavior: 'smooth' });
                 }
             };
 
-            row.innerHTML = `
-                <td class="time-range">
-                    ${startStr} - ${endStr}
-                </td>
+            const staffInfo = document.createElement('span');
+            staffInfo.className = "staff-count";
+            staffInfo.innerText = ` (Toerana ${availableEmployees.length} malalaka)`;
 
-                <td>
-                    <span class="status-badge status-available">
-                        mbola malalaka
-                    </span>
-                </td>
-
-                <td></td>
-            `;
-
-            row.children[2]
-                .appendChild(btn);
-
-            const staffInfo =
-                document.createElement(
-                    'span'
-                );
-
-            staffInfo.className =
-                "staff-count";
-
-            staffInfo.innerText =
-                `(${availableEmployees.length} place(s))`;
-
-            row.children[2]
-                .appendChild(staffInfo);
-
-            hasAny = true;
-
-        } else {
-
-            row.innerHTML = `
-                <td
-                    class="time-range"
-                    style="
-                        color:#999;
-                        text-decoration:line-through;
-                    "
-                >
-                    ${startStr} - ${endStr}
-                </td>
-
-                <td>
-                    <span class="status-badge status-busy">
-                        efa misy olona😊
-                    </span>
-                </td>
-
-                <td>
-                    <span
-                        style="
-                            color:#c81e1e;
-                            font-size:13px;
-                        "
-                    >
-                        ${
-                            isPastSlot
-                            ? "horaire passé"
-                            : "occupé"
-                        }
-                    </span>
-                </td>
-            `;
+            const actionCell = row.querySelector('.action-cell');
+            if (actionCell) {
+                actionCell.appendChild(btn);
+                actionCell.appendChild(staffInfo);
+            }
+            
+            fragment.appendChild(row);
         }
-
-        tableBody.appendChild(row);
     }
 
-    if (!hasAny) {
+    // 5. Fampidirana mitsitsy ny vokatra ao amin'ny DOM
+    tableBody.appendChild(fragment);
 
-        msg.innerText =
-            "tsy misy ora malalaka intsony ho an'ny androany😊 azafady misafidiana andro hafa.";
-
-        msg.style.display =
-            'block';
-
+    // Hafatra hita maso raha toa ka tsy misy ora malalaka intsony
+    if (!hasAnyAvailableSlot) {
+        msg.innerText = isToday 
+            ? "Tsy misy ora malalaka intsony ho an'ny androany 😊 Misafidiana daty hafa azafady."
+            : "Tsy misy ora malalaka amin'io daty io. Misafidiana daty hafa azafady.";
+        msg.style.display = 'block';
         return;
     }
 
-    msg.style.display =
-        'none';
-
-    tableWrapper.style.display =
-        'block';
+    msg.style.display = 'none';
+    tableWrapper.style.display = 'block';
 }
-
 
 
 function isEmployeeAvailable(emp, dateISO, startMin, endMin) {
@@ -900,5 +716,3 @@ function generateDynamicSlots(serviceDuration, dateISO, salonOpen, salonClose, b
 
     return slots;
 }
-
-
